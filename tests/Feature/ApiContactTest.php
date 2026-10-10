@@ -13,7 +13,7 @@ class ApiContactTest extends TestCase
     use RefreshDatabase;
 
     /** @test */
-    public function お問い合わせ一覧をJSONで取得できる(): void
+    public function お問い合わせ一覧を_jso_nで取得できる(): void
     {
         Contact::factory()->count(3)->create();
 
@@ -30,7 +30,7 @@ class ApiContactTest extends TestCase
     }
 
     /** @test */
-    public function お問い合わせ詳細をJSONで取得できる(): void
+    public function お問い合わせ詳細を_jso_nで取得できる(): void
     {
         $contact = Contact::factory()->create();
 
@@ -41,7 +41,7 @@ class ApiContactTest extends TestCase
     }
 
     /** @test */
-    public function 存在しないIDの場合は404を返す(): void
+    public function 存在しない_i_dの場合は404を返す(): void
     {
         $response = $this->getJson('/api/v1/contacts/999');
 
