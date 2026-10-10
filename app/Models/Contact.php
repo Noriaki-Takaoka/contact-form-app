@@ -32,4 +32,17 @@ class Contact extends Model
     {
         return $this->belongsToMany(Tag::class);
     }
+
+    /**
+     * 性別を日本語のラベルで取得する
+     */
+    public function getGenderLabelAttribute(): string
+    {
+        return match ((int) $this->gender) {
+            1 => '男性',
+            2 => '女性',
+            3 => 'その他',
+            default => '',
+        };
+    }
 }
