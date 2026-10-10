@@ -1,66 +1,244 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# COACHTECH お問い合わせフォーム
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 概要
 
-## About Laravel
+一般ユーザーが利用できる公開のお問い合わせフォームと、管理者がログインして問い合わせを管理する画面を備えた Web アプリケーションです。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### 実装した機能
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**基本機能**
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- お問い合わせフォーム（入力 → 確認 → 送信 → サンクスページ）
+- 入力値のバリデーション（FormRequest・日本語エラーメッセージ）
+- 管理者の新規登録・ログイン・ログアウト（Laravel Fortify）
+- 管理画面でのお問い合わせ一覧表示（7件ごとのページネーション）
+- 名前・メールアドレス・性別・カテゴリ・日付による絞り込み検索
+- お問い合わせ詳細表示・削除
+- タグの追加・編集・削除
 
-## Learning Laravel
+**応用機能**
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- 検索条件に対応した CSV エクスポート（BOM 付き）
+- 公開 API（お問い合わせの一覧取得・詳細取得・作成・更新・削除）
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## ER図
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```mermaid
+erDiagram
+    categories ||--o{ contacts : "1対多"
+    contacts ||--o{ contact_tag : "1対多"
+    tags ||--o{ contact_tag : "1対多"
 
-## Laravel Sponsors
+    users {
+        bigint id PK
+        varchar name
+        varchar email UK
+        timestamp email_verified_at
+        varchar password
+        varchar remember_token
+        timestamp created_at
+        timestamp updated_at
+    }
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+    categories {
+        bigint id PK
+        varchar content
+        timestamp created_at
+        timestamp updated_at
+    }
 
-### Premium Partners
+    contacts {
+        bigint id PK
+        bigint category_id FK
+        varchar first_name
+        varchar last_name
+        tinyint gender
+        varchar email
+        varchar tel
+        varchar address
+        varchar building
+        varchar detail
+        timestamp created_at
+        timestamp updated_at
+    }
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+    tags {
+        bigint id PK
+        varchar name UK
+        timestamp created_at
+        timestamp updated_at
+    }
 
-## Contributing
+    contact_tag {
+        bigint id PK
+        bigint contact_id FK
+        bigint tag_id FK
+        timestamp created_at
+        timestamp updated_at
+    }
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- categories と contacts は 1対多（1つのカテゴリに複数のお問い合わせが属する）
+- contacts と tags は 多対多（中間テーブル contact_tag で管理、contact_id と tag_id の組み合わせにユニーク制約）
 
-## Code of Conduct
+## 使用技術
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+| 項目 | バージョン・名称 |
+| --- | --- |
+| PHP | 8.2 |
+| Laravel | 10.x |
+| データベース | MySQL 8.0 |
+| Web サーバー | Nginx |
+| フロントエンド | Vite / Tailwind CSS ^3.4 / Alpine.js |
+| 認証 | Laravel Fortify |
+| 開発環境 | Docker / Laravel Sail / phpMyAdmin |
 
-## Security Vulnerabilities
+## 環境構築手順
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 1. リポジトリをクローンする
 
-## License
+```bash
+git clone <このリポジトリのURL> contact-form-app
+cd contact-form-app
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 2. 依存パッケージをインストールする
+
+```bash
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    -e COMPOSER_CACHE_DIR=/tmp/composer_cache \
+    laravelsail/php82-composer:latest \
+    composer install
+```
+
+### 3. 環境設定ファイルを作成する
+
+```bash
+cp .env.example .env
+```
+
+`.env` のデータベース設定を以下にします。
+
+```
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=laravel
+DB_USERNAME=sail
+DB_PASSWORD=password
+```
+
+### 4. コンテナを起動する
+
+```bash
+./vendor/bin/sail up -d
+```
+
+### 5. アプリケーションキーを生成する
+
+```bash
+./vendor/bin/sail artisan key:generate
+```
+
+### 6. マイグレーションと初期データ投入を実行する
+
+```bash
+./vendor/bin/sail artisan migrate --seed
+```
+
+### 7. フロントエンドをビルドする
+
+```bash
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run build
+```
+
+### 8. 動作確認
+
+ブラウザで http://localhost にアクセスします。
+
+## 開発環境URL
+
+| 用途 | URL |
+| --- | --- |
+| アプリケーション | http://localhost |
+| phpMyAdmin | http://localhost:8080 |
+
+## 管理者アカウント（シーディングで作成）
+
+| 項目 | 値 |
+| --- | --- |
+| メールアドレス | admin@example.com |
+| パスワード | password123 |
+
+## 画面一覧
+
+| 画面 | メソッド | パス | 認証 |
+| --- | --- | --- | --- |
+| お問い合わせフォーム入力 | GET | / | 不要 |
+| お問い合わせ確認 | POST | /contacts/confirm | 不要 |
+| お問い合わせ送信 | POST | /contacts | 不要 |
+| サンクスページ | GET | /thanks | 不要 |
+| 管理者登録 | GET/POST | /register | 不要 |
+| ログイン | GET/POST | /login | 不要 |
+| ログアウト | POST | /logout | 必要 |
+| 管理画面（一覧・検索） | GET | /admin | 必要 |
+| お問い合わせ詳細 | GET | /admin/contacts/{contact} | 必要 |
+| お問い合わせ削除 | DELETE | /admin/contacts/{contact} | 必要 |
+| CSV エクスポート | GET | /contacts/export | 必要 |
+| タグ追加 | POST | /admin/tags | 必要 |
+| タグ編集 | GET | /admin/tags/{tag}/edit | 必要 |
+| タグ更新 | PUT | /admin/tags/{tag} | 必要 |
+| タグ削除 | DELETE | /admin/tags/{tag} | 必要 |
+
+## APIエンドポイント一覧
+
+認証は不要です。
+
+| メソッド | パス | 概要 | 成功時のステータス |
+| --- | --- | --- | --- |
+| GET | /api/v1/contacts | お問い合わせ一覧を取得（keyword / gender / category_id / date で検索可能） | 200 |
+| GET | /api/v1/contacts/{contact} | お問い合わせ詳細を取得 | 200 |
+| POST | /api/v1/contacts | お問い合わせを作成 | 201 |
+| PUT | /api/v1/contacts/{contact} | お問い合わせを更新 | 200 |
+| DELETE | /api/v1/contacts/{contact} | お問い合わせを削除 | 204 |
+
+バリデーションに失敗した場合は 422 で日本語のエラーメッセージを返します。
+
+### レスポンス例（GET /api/v1/contacts）
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "first_name": "山田",
+      "last_name": "太郎",
+      "gender": 1,
+      "gender_label": "男性",
+      "email": "test@example.com",
+      "tel": "09012345678",
+      "address": "東京都渋谷区",
+      "building": null,
+      "detail": "お問い合わせ内容",
+      "category": { "id": 1, "content": "商品のお届けについて" },
+      "tags": [{ "id": 1, "name": "緊急" }],
+      "created_at": "2026-10-10 18:00:00",
+      "updated_at": "2026-10-10 18:00:00"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 10,
+    "total": 1
+  }
+}
+```
+
+## 作成者
+
+高岡 典明
