@@ -2,24 +2,28 @@
 
 ## 概要
 
-一般ユーザーが利用できる公開のお問い合わせフォームと、管理者がログインして問い合わせを管理する画面を備えた Web アプリケーションです。
+このアプリは商品やサービスに関する問い合わせを受け付けるためのものです。
 
-### 実装した機能
+一般のお客様はログインせずにフォームから問い合わせを送信できて、送信前に確認画面で入力内容を見返すことができます。
 
-**基本機能**
+管理者は管理画面で届いた問い合わせの一覧表示、検索、削除ができます。タグの管理もできます。
 
-- お問い合わせフォーム（入力 → 確認 → 送信 → サンクスページ）
-- 入力値のバリデーション（FormRequest・日本語エラーメッセージ）
-- 管理者の新規登録・ログイン・ログアウト（Laravel Fortify）
+## 実装した機能
+
+### 基本機能
+
+- お問い合わせフォーム（入力 → 確認 → 送信 → 完了）
+- 入力値のバリデーション（日本語のエラーメッセージ）
+- 管理者の新規登録・ログイン・ログアウト
 - 管理画面でのお問い合わせ一覧表示（7件ごとのページネーション）
 - 名前・メールアドレス・性別・カテゴリ・日付による絞り込み検索
-- お問い合わせ詳細表示・削除
+- お問い合わせの詳細表示・削除
 - タグの追加・編集・削除
 
-**応用機能**
+### 応用機能
 
-- 検索条件に対応した CSV エクスポート（BOM 付き）
-- 公開 API（お問い合わせの一覧取得・詳細取得・作成・更新・削除）
+- 検索条件に対応した CSV エクスポート
+- 公開API（お問い合わせの一覧取得・詳細取得・作成・更新・削除）
 
 ## ER図
 
@@ -78,27 +82,33 @@ erDiagram
     }
 ```
 
-- categories と contacts は 1対多（1つのカテゴリに複数のお問い合わせが属する）
-- contacts と tags は 多対多（中間テーブル contact_tag で管理、contact_id と tag_id の組み合わせにユニーク制約）
+categories と contacts は一対多の関係です。
+理由は、一つのカテゴリには複数の問い合わせが登録されますが、1件の問い合わせにはカテゴリは1件だけになるからです。
+
+contacts と tags は多対多の関係です。
+理由は、1件の問い合わせには複数のタグをつけられて、同じタグを複数の問い合わせにつけることもできるからです。
+
+しかし、これでは多対多は2つのテーブルで表現することができないので、contact_tag という中間テーブルが必要になります。
+同じタグが2重につくのを防ぐために、contact_id と tag_id の組み合わせにユニーク制約を設けています。
 
 ## 使用技術
 
-| 項目 | バージョン・名称 |
+| 項目 | 値 |
 | --- | --- |
 | PHP | 8.2 |
 | Laravel | 10.x |
-| データベース | MySQL 8.0 |
+| DB | MySQL 8.0 |
 | Web サーバー | Nginx |
-| フロントエンド | Vite / Tailwind CSS ^3.4 / Alpine.js |
+| フロント | Vite / Tailwind CSS 3.4 / Alpine.js |
 | 認証 | Laravel Fortify |
-| 開発環境 | Docker / Laravel Sail / phpMyAdmin |
+| 環境 | Docker / Laravel Sail / phpMyAdmin |
 
 ## 環境構築手順
 
 ### 1. リポジトリをクローンする
 
 ```bash
-git clone <このリポジトリのURL> contact-form-app
+git clone git@github.com:Noriaki-Takaoka/contact-form-app.git
 cd contact-form-app
 ```
 
@@ -162,17 +172,13 @@ DB_PASSWORD=password
 
 ## 開発環境URL
 
-| 用途 | URL |
-| --- | --- |
-| アプリケーション | http://localhost |
-| phpMyAdmin | http://localhost:8080 |
+- アプリ: http://localhost
+- phpMyAdmin: http://localhost:8080
 
-## 管理者アカウント（シーディングで作成）
+## 管理者アカウント（初期データ）
 
-| 項目 | 値 |
-| --- | --- |
-| メールアドレス | admin@example.com |
-| パスワード | password123 |
+- メールアドレス: admin@example.com
+- パスワード: password123
 
 ## 画面一覧
 
@@ -182,8 +188,8 @@ DB_PASSWORD=password
 | お問い合わせ確認 | POST | /contacts/confirm | 不要 |
 | お問い合わせ送信 | POST | /contacts | 不要 |
 | サンクスページ | GET | /thanks | 不要 |
-| 管理者登録 | GET/POST | /register | 不要 |
-| ログイン | GET/POST | /login | 不要 |
+| 管理者登録 | GET / POST | /register | 不要 |
+| ログイン | GET / POST | /login | 不要 |
 | ログアウト | POST | /logout | 必要 |
 | 管理画面（一覧・検索） | GET | /admin | 必要 |
 | お問い合わせ詳細 | GET | /admin/contacts/{contact} | 必要 |
@@ -202,43 +208,20 @@ DB_PASSWORD=password
 | --- | --- | --- | --- |
 | GET | /api/v1/contacts | お問い合わせ一覧を取得（keyword / gender / category_id / date で検索可能） | 200 |
 | GET | /api/v1/contacts/{contact} | お問い合わせ詳細を取得 | 200 |
-| POST | /api/v1/contacts | お問い合わせを作成 | 201 |
+| POST | /api/v1/contacts | お問い合わせを作成 | 201（作成できた） |
 | PUT | /api/v1/contacts/{contact} | お問い合わせを更新 | 200 |
-| DELETE | /api/v1/contacts/{contact} | お問い合わせを削除 | 204 |
+| DELETE | /api/v1/contacts/{contact} | お問い合わせを削除 | 204（削除できて返す中身がない） |
 
-バリデーションに失敗した場合は 422 で日本語のエラーメッセージを返します。
+入力チェックに失敗した場合は 422 で日本語のエラーメッセージを返します。
 
-### レスポンス例（GET /api/v1/contacts）
+## テスト
 
-```json
-{
-  "data": [
-    {
-      "id": 1,
-      "first_name": "山田",
-      "last_name": "太郎",
-      "gender": 1,
-      "gender_label": "男性",
-      "email": "test@example.com",
-      "tel": "09012345678",
-      "address": "東京都渋谷区",
-      "building": null,
-      "detail": "お問い合わせ内容",
-      "category": { "id": 1, "content": "商品のお届けについて" },
-      "tags": [{ "id": 1, "name": "緊急" }],
-      "created_at": "2026-10-10 18:00:00",
-      "updated_at": "2026-10-10 18:00:00"
-    }
-  ],
-  "meta": {
-    "current_page": 1,
-    "last_page": 1,
-    "per_page": 10,
-    "total": 1
-  }
-}
+```bash
+./vendor/bin/sail test
 ```
+
+お問い合わせフォーム、管理画面、公開APIについて、正常系・異常系・境界値の観点で Feature テストを実装しています。
 
 ## 作成者
 
-高岡 典明
+Noriaki Takaoka
